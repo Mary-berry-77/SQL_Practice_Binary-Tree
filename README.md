@@ -91,7 +91,7 @@ This project applies a binary tree structure to analyze the relationships betwee
 
 ## Analysis Steps and SQL Queries
 
-### 1. Root Identification
+### 1. Node Identification
 Identify whether a tweet is:
 - **Root**: An original tweet (parent_tweet_id is NULL).
 - **Inner**: A tweet that has both parent and child tweets.
@@ -120,7 +120,7 @@ FROM tweets;
 
 ---
 
-### 2. Depth and Breadth of Retweets
+### 2. Depth and Path of Retweets
 Analyze the depth of retweet chains using recursive CTEs to track the propagation path of tweets.
 
 #### Recursive Query for Depth and Path
