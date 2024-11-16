@@ -333,6 +333,18 @@ FROM twit_depth
 ORDER BY depth DESC;
 ```
 ---
+### Outcome
+|twit_id | depth | path |
+|--------|-------|------|
+|3	|3	|232 -> 339 -> 3|
+|4	|3	|330 -> 376 -> 4|
+|385|	2|	263 -> 385|
+|393|	2|	10 -> 393|
+|396|	1|	396|
+|397|	1|	397|
+
+---
+
 ### 3. **Maximum Retweet Depth**
 Identify the maximum depth of the tree:
 ```sql
@@ -368,6 +380,16 @@ WHERE parent_twit_id IS NOT NULL
 GROUP BY parent_twit_id
 ORDER BY num_retweet DESC;
 ```
+---
+### Outcome
+
+|parent_twit_id|num_retweet|
+|--------------|-----------|
+|149|	10|
+|94	|8|
+|226|	7|
+|172|	6|
+
 ---
 ### 5. **Retweet Count by Hierarchy**
 Summarize retweets by depth:
@@ -449,6 +471,14 @@ FROM depth_rank
 GROUP BY retweet_rank
 LIMIT 3;
 ```
+---
+### Outcome
+|top3_retweet_root_twit_id | top3_retweet_1st_inner_twit_id|
+|--------------------------|-------------------------------|
+|94|	149|
+|226|	172|
+|232	|216|
+
 ---
 ## 📈 Results
 1. Node Identification: Root, Inner, and Leaf nodes were successfully categorized.
