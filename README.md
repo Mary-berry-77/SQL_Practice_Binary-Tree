@@ -1,8 +1,8 @@
-# SQL Practice Binary Tree + Case study 1
+# SQL Practice Binary Tree + Case Study 1 + Case Study 2
 
 # SQL Learning Notes
 
-## Goals
+## 🎯 Goals
 This repository focuses on practicing SQL queries involving hierarchical data, specifically working with a binary tree structure. The goal is to practice categorizing nodes based on their relationship within the tree and gain a deeper understanding of SQL operations.
 
 ## Problem (Adapted from HackerRank)
@@ -17,7 +17,7 @@ The task is to write a query to determine the type of each node in the Binary Tr
 -Leaf: If the node is a leaf node (it has no children).  
 -Inner: If the node is neither root nor leaf (it has children).
 
-## Database
+## 🗂️ Database
 -Table: binary_tree 
 
 |N |    P|
@@ -69,10 +69,10 @@ select
 
 # Binary Tree Structure Analysis: A Twitter Retweet Case Study
 
-## Overview
+## 📖 Overview
 This project applies a binary tree structure to analyze the relationships between tweets and retweets using `parent_tweet_id`. By treating the hierarchical relationship between tweets and retweets as a binary tree, we can trace how a particular tweet spreads through retweets, identify key influencers, and evaluate the depth and breadth of its impact.
 
-### Objectives
+### 🎯 Objectives
 1. **Root Identification**: Identify the root tweets that serve as starting points for retweet chains.
 2. **Depth Analysis**: Determine how deeply a root tweet spreads through retweets.
 3. **Key Influencers**: Identify users whose tweets act as key intermediaries, amplifying the message to a wider audience.
@@ -80,7 +80,7 @@ This project applies a binary tree structure to analyze the relationships betwee
 
 ---
 
-## Dataset Structure
+## 🗂️ Dataset Structure
 - **tweet_id**: Unique identifier for the tweet.
 - **tweet_content**: The content of the tweet.
 - **retweet_count**: Number of retweets for this tweet.
@@ -89,7 +89,7 @@ This project applies a binary tree structure to analyze the relationships betwee
 
 ---
 
-## Analysis Steps and SQL Queries
+## 📊 Analysis Steps and SQL Queries
 
 ### 1. Node Identification
 Identify whether a tweet is:
@@ -229,7 +229,7 @@ WHERE tweet_id NOT IN (SELECT DISTINCT parent_tweet_id FROM tweets);
 |6|	106|
 ---
 
-## Results
+## 📈 Results
 ### 1. Root Identification
 - Classifies tweets into root, inner, or leaf nodes.
 
@@ -247,6 +247,221 @@ WHERE tweet_id NOT IN (SELECT DISTINCT parent_tweet_id FROM tweets);
 
 ---
 
-## Conclusion
+## 🏁 Conclusion
 This case study demonstrates how binary tree structures can be applied to social media data to analyze message propagation, identify influencers, and assess the overall impact of a campaign. The approach is scalable and adaptable for various hierarchical datasets.
+
+---
+
+# SQL Practice: Binary Tree Case Study 2
+
+This repository presents a case study focusing on SQL-based analysis of binary tree structures. The dataset is designed to simulate hierarchical relationships, enabling recursive SQL query practice and understanding node roles such as **Root**, **Inner**, and **Leaf** nodes. This study also evaluates the maximum tree depth and identifies key influencers.
+
+---
+
+## 📖 Overview
+This project aims to practice recursive SQL queries on a hierarchical dataset. By analyzing the data as a binary tree, we explore:
+1. Node identification (`Root`, `Inner`, `Leaf`).
+2. Depth and path traversal.
+3. Maximum tree depth.
+4. Identifying key influencers based on retweet counts.
+5. Summarizing retweets by hierarchy levels.
+6. Identifying top-performing tweets from each hierarchy.
+
+---
+
+## 🎯 Objectives
+1. Understand binary tree structures in SQL.
+2. Practice recursive SQL queries using **CTEs (Common Table Expressions)**.
+3. Analyze node relationships in hierarchical datasets.
+4. Apply SQL to real-world-like scenarios for hierarchical data analysis.
+
+---
+
+## 🗂️ Dataset Structure
+The dataset mimics Twitter-like hierarchical relationships. Key columns include:
+- **`twit_id`**: Unique identifier for each tweet.
+- **`twit_user_id`**: User ID of the tweet's creator.
+- **`content`**: Content of the tweet.
+- **`parent_twit_id`**: ID of the parent tweet (if it's a retweet).
+- **`num_retweet`**: Count of retweets for a tweet.
+
+---
+
+## 📊 Analysis Steps and SQL Queries
+
+### 1. **Node Identification**
+Identify the type of each node (`Root`, `Inner`, `Leaf`):
+```sql
+SELECT twit_id,
+       CASE 
+           WHEN parent_twit_id IS NULL AND twit_id NOT IN (SELECT parent_twit_id FROM twitter WHERE parent_twit_id IS NOT NULL) THEN 'root_and_leaf'
+           WHEN parent_twit_id IS NULL THEN 'root'
+           WHEN parent_twit_id IS NOT NULL AND twit_id IN (SELECT parent_twit_id FROM twitter) THEN 'inner'
+           WHEN parent_twit_id IS NOT NULL AND twit_id NOT IN (SELECT parent_twit_id FROM twitter WHERE parent_twit_id IS NOT NULL) THEN 'leaf'
+           ELSE NULL 
+       END AS node_type
+FROM twitter
+ORDER BY node_type;
+```
+---
+### 2. **Depth and Path Traversal**
+Traverse the tree to calculate depth and path for each tweet:
+```sql
+WITH RECURSIVE twit_depth AS (
+    SELECT 
+        twit_id,
+        parent_twit_id,
+        1 AS depth,
+        CAST(twit_id AS CHAR(500)) AS path
+    FROM twitter
+    WHERE parent_twit_id IS NULL
+    UNION ALL
+    SELECT 
+        t.twit_id,
+        t.parent_twit_id,
+        td.depth + 1 AS depth,
+        CONCAT(td.path, " -> ", t.twit_id) AS path
+    FROM twitter t
+    JOIN twit_depth td 
+      ON td.twit_id = t.parent_twit_id
+)
+SELECT 
+    twit_id,
+    depth,
+    path
+FROM twit_depth
+ORDER BY depth DESC;
+```
+---
+### 3. **Maximum Retweet Depth**
+Identify the maximum depth of the tree:
+```sql
+WITH RECURSIVE twit_depth AS (
+    SELECT 
+        twit_id,
+        parent_twit_id,
+        1 AS depth
+    FROM twitter
+    WHERE parent_twit_id IS NULL
+    UNION ALL
+    SELECT 
+        t.twit_id,
+        t.parent_twit_id,
+        td.depth + 1 AS depth
+    FROM twitter t
+    JOIN twit_depth td 
+      ON td.twit_id = t.parent_twit_id
+)
+SELECT MAX(depth) AS max_depth
+FROM twit_depth
+ORDER BY depth;
+```
+---
+### 4. **Key Influencers**
+Identify nodes with the highest number of retweets:
+```sql
+SELECT 
+    parent_twit_id,
+    COUNT(*) AS num_retweet
+FROM twitter
+WHERE parent_twit_id IS NOT NULL
+GROUP BY parent_twit_id
+ORDER BY num_retweet DESC;
+```
+---
+### 5. **Retweet Count by Hierarchy**
+Summarize retweets by depth:
+```sql
+WITH RECURSIVE twit_depth AS (
+    SELECT 
+        twit_id,
+        parent_twit_id,
+        1 AS depth
+    FROM twitter
+    WHERE parent_twit_id IS NULL
+    UNION ALL
+    SELECT 
+        t.twit_id,
+        t.parent_twit_id,
+        td.depth + 1 AS depth
+    FROM twitter t
+    JOIN twit_depth td 
+      ON td.twit_id = t.parent_twit_id
+),
+num_retweet_table AS (
+    SELECT 
+        parent_twit_id,
+        COUNT(*) AS num_retweet
+    FROM twitter
+    WHERE parent_twit_id IS NOT NULL
+    GROUP BY parent_twit_id
+)
+SELECT 
+    td.twit_id,
+    td.depth,
+    nr.num_retweet
+FROM twit_depth td
+LEFT JOIN num_retweet_table nr
+  ON td.twit_id = nr.parent_twit_id
+ORDER BY depth, num_retweet DESC;
+```
+### 6. **Tweets per Hierarchy**
+Retrieve the top 3 tweets based on retweets at each hierarchy level:
+```sql
+WITH RECURSIVE twit_depth AS (
+    SELECT 
+        twit_id,
+        parent_twit_id,
+        1 AS depth
+    FROM twitter
+    WHERE parent_twit_id IS NULL
+    UNION ALL
+    SELECT 
+        t.twit_id,
+        t.parent_twit_id,
+        td.depth + 1 AS depth
+    FROM twitter t
+    JOIN twit_depth td 
+      ON td.twit_id = t.parent_twit_id
+),
+num_retweet_table AS (
+    SELECT 
+        parent_twit_id,
+        COUNT(*) AS num_retweet
+    FROM twitter
+    WHERE parent_twit_id IS NOT NULL
+    GROUP BY parent_twit_id
+),
+depth_rank AS (
+    SELECT 
+        td.twit_id,
+        td.depth,
+        nr.num_retweet,
+        ROW_NUMBER() OVER (PARTITION BY depth ORDER BY num_retweet DESC) AS retweet_rank
+    FROM twit_depth td
+    LEFT JOIN num_retweet_table nr
+      ON td.twit_id = nr.parent_twit_id
+)
+SELECT 
+    MIN(CASE WHEN depth = 1 THEN twit_id ELSE NULL END) AS 'top3_retweet_root_twit_id',
+    MIN(CASE WHEN depth = 2 THEN twit_id ELSE NULL END) AS 'top3_retweet_1st_inner_twit_id'
+FROM depth_rank
+GROUP BY retweet_rank
+LIMIT 3;
+```
+---
+## 📈 Results
+1. Node Identification: Root, Inner, and Leaf nodes were successfully categorized.
+2. Tree Depth: The maximum tree depth is 3.
+3. Key Influencers: Top influencers were identified based on retweet counts.
+4. Hierarchy Retweets: Retweet counts were summarized by hierarchy levels.
+5. Top Tweets: Top 3 tweets per hierarchy were identified.
+---
+## 🏁 Conclusion
+This case study demonstrates SQL's power in analyzing hierarchical data using recursive queries. It provides insights into tree structures, key influencers, and hierarchy-specific trends.
+
+
+
+
+
 
